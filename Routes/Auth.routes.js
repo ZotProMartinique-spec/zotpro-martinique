@@ -1,12 +1,9 @@
 import express from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import { toggleFollow } from "../controllers/user.controller.js";
+import { auth } from "../middleware/auth.js";
 
 const router = express.Router();
 
-/* ================= REGISTER ================= */
-router.post("/register", register);
-
-/* ================= LOGIN ================= */
-router.post("/login", login);
+router.post("/follow/:id", auth, toggleFollow);
 
 export default router;
