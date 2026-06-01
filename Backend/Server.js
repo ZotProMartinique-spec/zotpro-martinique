@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3000;
 /* ================= MIDDLEWARE ================= */
 app.use(
   cors({
-    origin: "*", // en prod → ton domaine
+    origin: "*",
     credentials: true,
   })
 );
@@ -30,11 +30,11 @@ app.use(express.urlencoded({ extended: true }));
 
 /* ================= LOG REQUESTS ================= */
 app.use((req, res, next) => {
-  console.log(`[${req.method}] ${req.originalUrl}`);
+  console.log(`${req.method} ${req.originalUrl}`);
   next();
 });
 
-/* ================= DB CONNECT ================= */
+/* ================= DATABASE ================= */
 const connectDB = async () => {
   try {
     if (!process.env.MONGO_URI) {
@@ -44,8 +44,8 @@ const connectDB = async () => {
     await mongoose.connect(process.env.MONGO_URI);
 
     console.log("✅ MongoDB connecté");
-  } catch (err) {
-    console.error("❌ MongoDB error:", err.message);
+  } catch (error) {
+    console.error("❌ DB error:", error.message);
     process.exit(1);
   }
 };
@@ -54,7 +54,10 @@ await connectDB();
 
 /* ================= ROUTES ================= */
 app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);   // 👈 AJOUT IMPORTANT
+
+/* 👇 USERS MODULE (ICI) */
+app.use("/api/users", userRoutes);
+
 app.use("/api/posts", postRoutes);
 app.use("/api/shops", shopRoutes);
 app.use("/api/products", productRoutes);
@@ -63,23 +66,19 @@ app.use("/api/products", productRoutes);
 app.get("/", (req, res) => {
   res.status(200).json({
     name: "ZotPro SaaS",
-    version: "1.0.0",
     status: "online",
     database:
       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
   });
 });
 
-/* ================= 404 HANDLER ================= */
+/* ================= 404 ================= */
 app.use((req, res) => {
-  res.status(404).json({
-    error: "Route introuvable",
-  });
+  res.status(404).json({ error: "Route introuvable" });
 });
 
-/* ================= START SERVER ================= */
+/* ================= START ================= */
 app.listen(PORT, () => {
   console.log(`🚀 ZotPro SaaS running on port ${PORT}`);
 });
