@@ -13,21 +13,12 @@ dotenv.config();
 const app = express();
 
 /* ================= MIDDLEWARE ================= */
-app.use(cors());
+app.use(cors({ origin: "*"}));
 app.use(express.json({ limit: "10mb" }));
 
 /* ================= DB ================= */
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ MongoDB connecté");
-  } catch (err) {
-    console.error("❌ MongoDB error:", err.message);
-    process.exit(1);
-  }
-};
-
-connectDB();
+await mongoose.connect(process.env.MONGO_URI);
+console.log("✅ MongoDB connected");
 
 /* ================= ROUTES ================= */
 app.use("/api/auth", authRoutes);
@@ -37,16 +28,9 @@ app.use("/api/posts", postRoutes);
 
 /* ================= HEALTH ================= */
 app.get("/", (req, res) => {
-  res.json({
-    app: "ZotPro SaaS",
-    status: "online",
-    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected"
-  });
+  res.json({ status: "ZotPro SaaS running 🚀" });
 });
 
 /* ================= START ================= */
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log("🚀 Running on", PORT));
