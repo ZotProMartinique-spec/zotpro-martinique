@@ -1,34 +1,35 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+/* FOLLOW / UNFOLLOW */
+export const toggleFollow = async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    const userId = req.user.id;
 
-  const exists = await User.findOne({ email });
-  if (exists) return res.status(409).json({ error: "Email used" });
+    const user = await User.findById(userId);
+    const target = await User.findById(targetId);
 
-  const hashed = await bcrypt.hash(password, 10);
+    if (!target) return res.status(404).json({ error: "User not found" });
 
-  const user = await User.create({ name, email, password: hashed });
+    const isFollowing = user.following.includes(targetId);
 
-  res.status(201).json(user);
-};
+    if (isFollowing) {
+      user.following = user.following.filter(
+        (id) => id.toString() !== targetId
+      );
+      target.followers = target.followers.filter(
+        (id) => id.toString() !== userId
+      );
+    } else {
+      user.following.push(targetId);
+      target.followers.push(userId);
+    }
 
-export const login = async (req, res) => {
-  const { email, password } = req.body;
+    await user.save();
+    await target.save();
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ error: "Not found" });
-
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.status(401).json({ error: "Wrong password" });
-
-  const token = jwt.sign(
-    { id: user._id, name: user.name },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-
-  res.json({ token, user });
+    res.json({ message: "updated" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
