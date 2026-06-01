@@ -1,68 +1,20 @@
-import Post from "../models/Post.js";
+export const calculateScore = (post, userId = null) => {
+  const now = Date.now();
+  const created = new Date(post.createdAt).getTime();
 
-/* SCORE FUNCTION */
-const calcScore = (post) => {
-  const engagement =
-    post.likes.length * 2 + post.comments.length * 3;
+  const ageHours = (now - created) / 36e5;
 
-  const hours =
-    (Date.now() - new Date(post.createdAt)) / 36e5;
+  const likeScore = post.likes.length * 3;
+  const commentScore = post.comments.length * 5;
+  const viewScore = post.views * 0.2;
 
-  return engagement / (hours + 2);
-};
+  let socialBoost = 0;
 
-/* CREATE */
-export const createPost = async (req, res) => {
-  const post = await Post.create({
-    user: req.user.id,
-    content: req.body.content,
-    image: req.body.image,
-  });
-
-  res.status(201).json(post);
-};
-
-/* FEED (ALGO) */
-export const getPosts = async (req, res) => {
-  const posts = await Post.find()
-    .populate("user", "name")
-    .sort({ createdAt: -1 });
-
-  const ranked = posts
-    .map((p) => ({
-      ...p.toObject(),
-      score: calcScore(p),
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  res.json(ranked);
-};
-
-/* LIKE */
-export const toggleLike = async (req, res) => {
-  const post = await Post.findById(req.params.id);
-
-  const userId = req.user.id;
-
-  if (post.likes.includes(userId)) {
-    post.likes = post.likes.filter((id) => id != userId);
-  } else {
-    post.likes.push(userId);
+  if (userId && post.user?.followers?.includes(userId)) {
+    socialBoost = 5;
   }
 
-  await post.save();
-  res.json(post);
-};
+  const decay = Math.max(1, ageHours + 2);
 
-/* COMMENT */
-export const addComment = async (req, res) => {
-  const post = await Post.findById(req.params.id);
-
-  post.comments.push({
-    user: req.user.id,
-    text: req.body.text,
-  });
-
-  await post.save();
-  res.json(post);
+  return (likeScore + commentScore + viewScore + socialBoost) / decay;
 };
