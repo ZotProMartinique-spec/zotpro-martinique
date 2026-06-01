@@ -1,14 +1,14 @@
 import mongoose from "mongoose";
 
-const ShopSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    category: { type: String, required: true },
-    description: { type: String }
-  },
-  { timestamps: true }
+export default mongoose.model(
+  "Shop",
+  new mongoose.Schema(
+    {
+      name: String,
+      category: String,
+      description: String,
+      owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    },
+    { timestamps: true }
+  )
 );
-
-const Shop = mongoose.model("Shop", ShopSchema);
-
-export default Shop;
