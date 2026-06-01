@@ -1,24 +1,20 @@
-import mongoose from "mongoose";
+export const calculateScore = (post, userId = null) => {
+  const now = Date.now();
+  const created = new Date(post.createdAt).getTime();
 
-export default mongoose.model(
-  "Post",
-  new mongoose.Schema(
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      content: String,
-      image: String,
+  const ageHours = (now - created) / 36e5;
 
-      likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-      comments: [
-        {
-          user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-          text: String,
-          createdAt: { type: Date, default: Date.now },
-        },
-      ],
+  const likeScore = post.likes.length * 3;
+  const commentScore = post.comments.length * 5;
+  const viewScore = post.views * 0.2;
 
-      score: { type: Number, default: 0 },
-    },
-    { timestamps: true }
-  )
-);
+  let socialBoost = 0;
+
+  if (userId && post.user?.followers?.includes(userId)) {
+    socialBoost = 5;
+  }
+
+  const decay = Math.max(1, ageHours + 2);
+
+  return (likeScore + commentScore + viewScore + socialBoost) / decay;
+};
