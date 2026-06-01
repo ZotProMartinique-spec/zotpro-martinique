@@ -1,74 +1,68 @@
 import Post from "../models/Post.js";
 
-/* CREATE POST */
+/* SCORE FUNCTION */
+const calcScore = (post) => {
+  const engagement =
+    post.likes.length * 2 + post.comments.length * 3;
+
+  const hours =
+    (Date.now() - new Date(post.createdAt)) / 36e5;
+
+  return engagement / (hours + 2);
+};
+
+/* CREATE */
 export const createPost = async (req, res) => {
-  try {
-    const post = await Post.create({
-      user: req.user.id,
-      content: req.body.content,
-      image: req.body.image || null,
-    });
+  const post = await Post.create({
+    user: req.user.id,
+    content: req.body.content,
+    image: req.body.image,
+  });
 
-    res.status(201).json(post);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.status(201).json(post);
 };
 
-/* GET FEED */
+/* FEED (ALGO) */
 export const getPosts = async (req, res) => {
-  try {
-    const posts = await Post.find()
-      .populate("user", "name email")
-      .sort({ createdAt: -1 });
+  const posts = await Post.find()
+    .populate("user", "name")
+    .sort({ createdAt: -1 });
 
-    res.json(posts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const ranked = posts
+    .map((p) => ({
+      ...p.toObject(),
+      score: calcScore(p),
+    }))
+    .sort((a, b) => b.score - a.score);
+
+  res.json(ranked);
 };
 
-/* LIKE / UNLIKE */
+/* LIKE */
 export const toggleLike = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
+  const post = await Post.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ error: "Post introuvable" });
+  const userId = req.user.id;
 
-    const userId = req.user.id;
-
-    const alreadyLiked = post.likes.includes(userId);
-
-    if (alreadyLiked) {
-      post.likes = post.likes.filter((id) => id.toString() !== userId);
-    } else {
-      post.likes.push(userId);
-    }
-
-    await post.save();
-
-    res.json(post);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  if (post.likes.includes(userId)) {
+    post.likes = post.likes.filter((id) => id != userId);
+  } else {
+    post.likes.push(userId);
   }
+
+  await post.save();
+  res.json(post);
 };
 
-/* ADD COMMENT */
+/* COMMENT */
 export const addComment = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
+  const post = await Post.findById(req.params.id);
 
-    if (!post) return res.status(404).json({ error: "Post introuvable" });
+  post.comments.push({
+    user: req.user.id,
+    text: req.body.text,
+  });
 
-    post.comments.push({
-      user: req.user.id,
-      text: req.body.text,
-    });
-
-    await post.save();
-
-    res.json(post);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  await post.save();
+  res.json(post);
 };
