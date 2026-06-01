@@ -1,12 +1,7 @@
-import mongoose from "mongoose";
+following: [
+  { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+],
 
-const UserSchema = new mongoose.Schema(
-  {
-    name: String,
-    email: { type: String, unique: true },
-    password: String,
-  },
-  { timestamps: true }
-);
-
-export default mongoose.model("User", UserSchema);
+followers: [
+  { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+],
