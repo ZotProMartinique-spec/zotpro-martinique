@@ -1,13 +1,11 @@
-const Post = mongoose.model(
+import mongoose from "mongoose";
+
+export default mongoose.model(
   "Post",
   new mongoose.Schema(
     {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-
-      caption: String,
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      content: String,
       image: String,
 
       likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -19,15 +17,8 @@ const Post = mongoose.model(
         },
       ],
 
-      //
-      score: {
-        type: Number,
-        default: 0,
-        index: true,
-      },
+      score: { type: Number, default: 0 },
     },
     { timestamps: true }
   )
 );
-
-export default Post;
