@@ -2,11 +2,11 @@ export const calculateScore = (post, userId = null) => {
   const now = Date.now();
   const created = new Date(post.createdAt).getTime();
 
-  const ageHours = (now - created) / 36e5;
+  const ageHours = (now - created) / 3600000;
 
-  const likeScore = post.likes.length * 3;
-  const commentScore = post.comments.length * 5;
-  const viewScore = post.views * 0.2;
+  const likeScore = (post.likes?.length || 0) * 3;
+  const commentScore = (post.comments?.length || 0) * 5;
+  const viewScore = (post.views || 0) * 0.2;
 
   let socialBoost = 0;
 
