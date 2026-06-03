@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import mongoose from "mongoose";
+
+import connectDB from "./config/db.js";
 
 /* ROUTES */
 import authRoutes from "./routes/auth.routes.js";
@@ -33,14 +34,7 @@ app.use(express.urlencoded({ extended: true }));
 
 /* ================= DATABASE ================= */
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB connecté");
-  })
-  .catch((error) => {
-    console.error("❌ Erreur MongoDB :", error.message);
-  });
+connectDB();
 
 /* ================= HEALTH ================= */
 
@@ -50,10 +44,6 @@ app.get("/", (req, res) => {
     status: "online",
     version: "1.0.0",
     timestamp: new Date().toISOString(),
-    database:
-      mongoose.connection.readyState === 1
-        ? "connected"
-        : "disconnected",
   });
 });
 
@@ -61,10 +51,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({
     success: true,
     uptime: process.uptime(),
-    database:
-      mongoose.connection.readyState === 1
-        ? "connected"
-        : "disconnected",
+    timestamp: new Date().toISOString(),
   });
 });
 
