@@ -4,17 +4,6 @@ import dotenv from "dotenv";
 
 import connectDB from "./config/db.js";
 
-import authRoutes from "./routes/auth.routes.js";
-import userRoutes from "./routes/user.routes.js";
-import postRoutes from "./routes/post.routes.js";
-import productRoutes from "./routes/product.routes.js";
-import shopRoutes from "./routes/shop.routes.js";
-import eventRoutes from "./routes/event.routes.js";
-import reviewRoutes from "./routes/review.routes.js";
-import favoriteRoutes from "./routes/favorite.routes.js";
-import notificationRoutes from "./routes/notification.routes.js";
-import messageRoutes from "./routes/message.routes.js";
-
 dotenv.config();
 
 const app = express();
@@ -26,21 +15,41 @@ connectDB();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
+/* ROUTES SAFE LOAD */
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import postRoutes from "./routes/post.routes.js";
+
+/* OPTIONAL ROUTES (évite crash si pas prêts) */
+let productRoutes, shopRoutes, eventRoutes, reviewRoutes, favoriteRoutes, notificationRoutes, messageRoutes;
+
+try { productRoutes = (await import("./routes/product.routes.js")).default; } catch {}
+try { shopRoutes = (await import("./routes/shop.routes.js")).default; } catch {}
+try { eventRoutes = (await import("./routes/event.routes.js")).default; } catch {}
+try { reviewRoutes = (await import("./routes/review.routes.js")).default; } catch {}
+try { favoriteRoutes = (await import("./routes/favorite.routes.js")).default; } catch {}
+try { notificationRoutes = (await import("./routes/notification.routes.js")).default; } catch {}
+try { messageRoutes = (await import("./routes/message.routes.js")).default; } catch {}
+
 /* ROUTES */
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/shops", shopRoutes);
-app.use("/api/events", eventRoutes);
-app.use("/api/reviews", reviewRoutes);
-app.use("/api/favorites", favoriteRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/messages", messageRoutes);
+
+if (productRoutes) app.use("/api/products", productRoutes);
+if (shopRoutes) app.use("/api/shops", shopRoutes);
+if (eventRoutes) app.use("/api/events", eventRoutes);
+if (reviewRoutes) app.use("/api/reviews", reviewRoutes);
+if (favoriteRoutes) app.use("/api/favorites", favoriteRoutes);
+if (notificationRoutes) app.use("/api/notifications", notificationRoutes);
+if (messageRoutes) app.use("/api/messages", messageRoutes);
 
 /* HEALTH */
 app.get("/", (req, res) => {
-  res.json({ app: "ZotPro", status: "online" });
+  res.json({
+    app: "ZotPro",
+    status: "online"
+  });
 });
 
 /* 404 */
